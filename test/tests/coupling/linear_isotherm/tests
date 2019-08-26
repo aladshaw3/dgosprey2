@@ -1,0 +1,7 @@
+[Tests]
+  [./linear_isotherm_test]
+    type = Exodiff
+    input = Kr_Xe_linear_isotherm.i
+    exodiff = Kr_Xe_linear_isotherm_out.e
+  [../]
+[]

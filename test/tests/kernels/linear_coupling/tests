@@ -1,0 +1,7 @@
+[Tests]
+  [./linear_coupling_test]
+    type = Exodiff
+    input = ConservationCouplingTest.i
+    exodiff = ConservationCouplingTest_out.e
+  [../]
+[]

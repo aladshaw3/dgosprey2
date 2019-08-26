@@ -1,0 +1,7 @@
+[Tests]
+  [./Langmuir_LDF_Test]
+    type = Exodiff
+    input = Kr_Xe_HZ_HighQ.i
+    exodiff = Kr_Xe_HZ_HighQ_out.e
+  [../]
+[]

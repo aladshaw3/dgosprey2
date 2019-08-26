@@ -1,0 +1,112 @@
+10
+
+dir
+0
+https://localhost:4443/svn/herd/trunk/gtosprey/include/kernels
+https://localhost:4443/svn/herd
+add
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+dd8cd9ef-2931-0410-98ca-75ad22d19dd1
+
+HeatConvection.h
+file
+
+
+
+add
+
+FluidHeatTransfer.h
+file
+
+
+
+add
+
+LinearDrivingForce.h
+file
+
+
+
+add
+
+RetardedTimeDerivative.h
+file
+
+
+
+add
+
+Advection.h
+file
+
+
+
+add
+
+Dispersion.h
+file
+
+
+
+add
+
+BedWallHeatTransfer.h
+file
+
+
+
+add
+
+BedHeatAccumulation.h
+file
+
+
+
+add
+
+ConservativeAdvection.h
+file
+
+
+
+add
+
+WallAmbientHeatTransfer.h
+file
+
+
+
+add
+
+WallHeatAccumulation.h
+file
+
+
+
+add
+
+HeatConductivity.h
+file
+
+
+
+add
+

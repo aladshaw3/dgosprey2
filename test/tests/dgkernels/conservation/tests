@@ -1,0 +1,7 @@
+[Tests]
+  [./conservation_test]
+    type = Exodiff
+    input = ConservationTest.i
+    exodiff = ConservationTest_out.e
+  [../]
+[]

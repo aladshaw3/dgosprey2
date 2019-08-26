@@ -1,0 +1,7 @@
+[Tests]
+  [./Langmuir_Test]
+    type = Exodiff
+    input = H2O_MS3A_ORNL_LangmuirTest.i
+    exodiff = H2O_MS3A_ORNL_LangmuirTest_out.e
+  [../]
+[]

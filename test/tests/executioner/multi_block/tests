@@ -1,0 +1,7 @@
+[Tests]
+  [./multi_block_test]
+    type = Exodiff
+    input = ThreeBlock-CoupledLDF.i
+    exodiff = ThreeBlock-CoupledLDF_out.e
+  [../]
+[]

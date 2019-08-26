@@ -1,0 +1,7 @@
+[Tests]
+  [./settling_3d_test]
+    type = Exodiff
+    input = ConstantSettling3D.i
+    exodiff = ConstantSettling3D_out.e
+  [../]
+[]

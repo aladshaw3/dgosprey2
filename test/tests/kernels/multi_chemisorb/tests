@@ -1,0 +1,7 @@
+[Tests]
+  [./multi_chemisorption_test]
+    type = Exodiff
+    input = MultiChemisorb_Test.i
+    exodiff = MultiChemisorb_Test_out.e
+  [../]
+[]

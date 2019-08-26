@@ -1,0 +1,7 @@
+[Tests]
+  [./variable_reac_order_test]
+    type = Exodiff
+    input = VariableOrderReactionTest.i
+    exodiff = VariableOrderReactionTest_out.e
+  [../]
+[]

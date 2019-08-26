@@ -1,0 +1,73 @@
+# Test input file for YAML and SHARK
+
+TestDoc1: &hat
+---
+- scenario:
+  numvar: 25
+  act_fun: DAVIES
+  steadystate: FALSE
+  t_out: 1
+  pH: 0
+  
+- testblock:
+  another: block
+  - subblock:
+    sub: block
+...
+
+TestDoc2: *hat
+---
+- masterspecies:
+  "Cl - (aq)": 0
+  "Na + (aq)": 1
+  "H2O (l)": 2
+  3: NaCl (aq)
+...
+
+TestDoc3:
+---
+apple: red
+pear: green
+
+- array: # Block
+  banana: yellow
+# List 1 in array 
+  - list1: &a # also a block
+    a: 1 # key : value
+    b: 2
+    c: 3
+# List 2 in array
+  - list2: *a
+    a: 4
+    b: 5
+    c: 6
+...
+
+TestDoc4:
+---
+- anchor: &anchor
+  stuff: to do
+- alias: *anchor
+  add: to stuff
+
+- list:
+  - anchored: &list_anchor
+    info: blah
+    atta: boy
+  - aliased: *list_anchor
+    info: bruh
+    atta: ber
+...
+
+# WARNING: MAKE SURE FILE DOES NOT CONTAIN TABS!!!
+
+TestDoc5:
+---
+
+- grab: *anchor
+  add2: more adds
+  - listcopy: *a
+  
+- block: {1: 2, 3: 4}
+  still: in block
+...

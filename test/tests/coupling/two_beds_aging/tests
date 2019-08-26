@@ -1,0 +1,7 @@
+[Tests]
+  [./multibed_adsorption_aging]
+    type = Exodiff
+    input = H2O_I2_MS3A_Ag0Z_TwoBeds_Test.i
+    exodiff = H2O_I2_MS3A_Ag0Z_TwoBeds_Test_out.e
+  [../]
+[]

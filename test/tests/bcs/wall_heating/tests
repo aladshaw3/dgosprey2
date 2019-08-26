@@ -1,0 +1,7 @@
+[Tests]
+  [./wall_heating_test]
+    type = Exodiff
+    input = TemperatureLDFCouplingTest.i
+    exodiff = TemperatureLDFCouplingTest_out.e
+  [../]
+[]

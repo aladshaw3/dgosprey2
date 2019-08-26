@@ -1,0 +1,7 @@
+[Tests]
+  [./Const_Silver_Aging_Test]
+    type = Exodiff
+    input = H2O_I2_Ag0Z_GSTA_Small.i
+    exodiff = H2O_I2_Ag0Z_GSTA_Small_out.e
+  [../]
+[]

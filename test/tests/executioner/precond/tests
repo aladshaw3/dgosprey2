@@ -1,0 +1,7 @@
+[Tests]
+  [./smp_lu_test]
+    type = Exodiff
+    input = smp_lu_test.i
+    exodiff = smp_lu_test_out.e
+  [../]
+[]

@@ -1,0 +1,7 @@
+[Tests]
+  [./wall_temp_test]
+    type = Exodiff
+    input = wall_temp_test.i
+    exodiff = wall_temp_test_out.e
+  [../]
+[]

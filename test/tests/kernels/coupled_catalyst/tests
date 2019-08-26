@@ -1,0 +1,7 @@
+[Tests]
+  [./coupled_catalyst_test]
+    type = Exodiff
+    input = CoupledCatalystTest.i
+    exodiff = CoupledCatalystTest_out.e
+  [../]
+[]

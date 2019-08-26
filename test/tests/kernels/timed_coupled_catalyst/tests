@@ -1,0 +1,7 @@
+[Tests]
+  [./time_dependent_catalyst_test]
+    type = Exodiff
+    input = TimeDependentCoupledCatalystTest.i
+    exodiff = TimeDependentCoupledCatalystTest_out.e
+  [../]
+[]

@@ -1,0 +1,7 @@
+[Tests]
+  [./settling_2d_test]
+    type = Exodiff
+    input = ConstantSettling.i
+    exodiff = ConstantSettling_out.e
+  [../]
+[]

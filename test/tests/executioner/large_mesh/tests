@@ -1,0 +1,7 @@
+[Tests]
+  [./large_mesh_test]
+    type = Exodiff
+    input = LargeMesh.i
+    exodiff = LargeMesh_out.e
+  [../]
+[]

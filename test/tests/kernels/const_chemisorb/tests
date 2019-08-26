@@ -1,0 +1,7 @@
+[Tests]
+  [./const_chemisorption_test]
+    type = Exodiff
+    input = ConstChemisorb_Test.i
+    exodiff = ConstChemisorb_Test_out.e
+  [../]
+[]

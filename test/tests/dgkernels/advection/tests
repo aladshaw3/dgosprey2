@@ -1,0 +1,7 @@
+[Tests]
+  [./dgadvection_test]
+    type = Exodiff
+    input = dgadvection_test.i
+    exodiff = dgadvection_test_out.e
+  [../]
+[]

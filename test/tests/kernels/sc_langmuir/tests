@@ -1,0 +1,7 @@
+[Tests]
+  [./langmuir_sc_test]
+    type = Exodiff
+    input = ShrinkingCoreLangmuir.i
+    exodiff = ShrinkingCoreLangmuir_out.e
+  [../]
+[]

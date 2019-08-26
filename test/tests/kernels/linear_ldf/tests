@@ -1,0 +1,7 @@
+[Tests]
+  [./linear_ldf_test]
+    type = Exodiff
+    input = ConservationLDFCouplingTest.i
+    exodiff = ConservationLDFCouplingTest_out.e
+  [../]
+[]

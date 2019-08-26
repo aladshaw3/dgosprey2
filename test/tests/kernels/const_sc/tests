@@ -1,0 +1,7 @@
+[Tests]
+  [./const_sc_test]
+    type = Exodiff
+    input = ConstShrinkingCoreTest.i
+    exodiff = ConstShrinkingCoreTest_out.e
+  [../]
+[]

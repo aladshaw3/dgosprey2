@@ -1,0 +1,7 @@
+[Tests]
+  [./GSTA_LDF_Test]
+    type = Exodiff
+    input = H2O_MS3A_GSTA_LDF.i
+    exodiff = H2O_MS3A_GSTA_LDF_out.e
+  [../]
+[]
