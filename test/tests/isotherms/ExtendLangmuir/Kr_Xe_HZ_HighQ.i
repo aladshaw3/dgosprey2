@@ -135,7 +135,6 @@ initial_temp = 191.15
 [./accumKr]
 type = BedMassAccumulation
 variable = Kr
-index = 0   #NOTE: NEED TO REMOVE AND CHANGE IN KERNEL
 [../]
 
 [./Kr_MT]
@@ -158,7 +157,6 @@ variable = Kr
 [./accumXe]
 type = BedMassAccumulation
 variable = Xe
-index = 1	#NOTE: NEED TO REMOVE AND CHANGE IN KERNEL
 [../]
 
 [./Xe_MT]
@@ -181,7 +179,6 @@ variable = Xe
 [./accumHe]
 type = BedMassAccumulation
 variable = He
-index = 2	#NOTE: NEED TO REMOVE AND CHANGE IN KERNEL
 [../]
 
 [./diffHe]

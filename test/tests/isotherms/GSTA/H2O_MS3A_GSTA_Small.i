@@ -121,7 +121,6 @@
 	[./accumN2]
 		type = BedMassAccumulation
 		variable = N2
-		index = 0
 	[../]
  
 	[./diffN2]
@@ -138,7 +137,6 @@
 	[./accumO2]
 		type = BedMassAccumulation
 		variable = O2
-		index = 1
 	[../]
  
 	[./diffO2]
@@ -155,7 +153,6 @@
 	[./accumH2O]
 		type = BedMassAccumulation
 		variable = H2O
-		index = 2
 	[../]
  
 	[./H2O_MT]

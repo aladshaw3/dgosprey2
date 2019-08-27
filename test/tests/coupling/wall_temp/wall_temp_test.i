@@ -224,7 +224,6 @@
 		comp_ref_temp = '273.15 273.15 273.15'
 		comp_Sutherland_const = '266.505 232.746 80.0'
 		flow_rate = 2994.06
-		length = 22.86
 		temperature = column_temp
 		total_pressure = total_pressure
 		coupled_gases = 'Kr Xe He'

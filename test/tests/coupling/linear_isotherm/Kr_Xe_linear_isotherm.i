@@ -58,42 +58,36 @@
 		order = FIRST
 		family = MONOMIAL
 		initial_condition = 101.35
-		execute_on = 'initial timestep_end'
 	[../]
 
 	[./ambient_temp]
 		order = FIRST
 		family = MONOMIAL
 		initial_condition = 220.15
-		execute_on = 'initial timestep_end'
 	[../]
  
 	[./wall_temp]
 		order = FIRST
 		family = MONOMIAL
 		initial_condition = 220.15
-		execute_on = 'initial timestep_end'
 	[../]
  
 	[./column_temp]
 		order = FIRST
 		family = MONOMIAL
 		initial_condition = 220.15
-		execute_on = 'initial timestep_end'
 	[../]
  
 	[./Kr_AdsorbedHeat]
 		order = FIRST
 		family = MONOMIAL
 		initial_condition = 0.0
-		execute_on = 'initial timestep_end'
 	[../]
  
 	[./Xe_AdsorbedHeat]
 		order = FIRST
 		family = MONOMIAL
 		initial_condition = 0.0
-		execute_on = 'initial timestep_end'
 	[../]
 
 [] #END AuxVariables
@@ -131,7 +125,6 @@
 	[./accumKr]
 		type = BedMassAccumulation
 		variable = Kr
-		index = 0   #NOTE: NEED TO REMOVE AND CHANGE IN KERNEL
 	[../]
 
 	[./Kr_MT]
@@ -154,7 +147,6 @@
 	[./accumXe]
 		type = BedMassAccumulation
 		variable = Xe
-		index = 1	#NOTE: NEED TO REMOVE AND CHANGE IN KERNEL
 	[../]
 
 	[./Xe_MT]
@@ -177,7 +169,6 @@
 	[./accumHe]
 		type = BedMassAccumulation
 		variable = He
-		index = 2	#NOTE: NEED TO REMOVE AND CHANGE IN KERNEL
 	[../]
 
 	[./diffHe]
@@ -315,7 +306,6 @@
 		comp_ref_temp = '273.15 273.15 273.15'
 		comp_Sutherland_const = '266.505 232.746 80.0'
 		flow_rate = 2994.06
-		length = 22.86
 		temperature = column_temp
 		total_pressure = total_pressure
 		coupled_gases = 'Kr Xe He'
