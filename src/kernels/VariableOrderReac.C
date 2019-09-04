@@ -165,12 +165,12 @@ Real VariableOrderReac::computeRateFunctionSpeciesOffDiagJacobi(int i)
 
 Real VariableOrderReac::computeQpResidual()
 {
-    return _test[_i][_qp]*_u_dot[_qp] - _test[_i][_qp]*computeRateFunction();
+    return -_test[_i][_qp]*computeRateFunction();
 }
 
 Real VariableOrderReac::computeQpJacobian()
 {
-    return _test[_i][_qp]*_phi[_j][_qp]*_du_dot_du[_qp] - _test[_i][_qp]*computeRateFunctionJacobi();
+    return -_test[_i][_qp]*computeRateFunctionJacobi();
 }
 
 Real VariableOrderReac::computeQpOffDiagJacobian(unsigned int jvar)

@@ -1,0 +1,7 @@
+[Tests]
+  [./solid_reaction_test]
+    type = Exodiff
+    input = GenericReactionTest.i
+    exodiff = GenericReactionTest_out.e
+  [../]
+[]

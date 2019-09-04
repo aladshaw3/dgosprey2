@@ -130,6 +130,26 @@
         variable =column_temp
     [../]
  
+    [./H_MOR_MT]
+        type = CoefTimeDerivative
+        variable = H_MOR
+    [../]
+ 
+    [./Ag_MOR_MT]
+        type = CoefTimeDerivative
+        variable = Ag_MOR
+    [../]
+ 
+    [./HNO3_MT]
+        type = CoefTimeDerivative
+        variable = HNO3
+    [../]
+ 
+    [./AgNO3_MT]
+        type = CoefTimeDerivative
+        variable = Ag_NO3
+    [../]
+ 
     [./Ag_NO3_to_Ag_MOR_1]
         type = VariableOrderReac
         variable = Ag_MOR
