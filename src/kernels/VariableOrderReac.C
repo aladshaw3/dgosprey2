@@ -65,7 +65,7 @@ InputParameters validParams<VariableOrderReac>()
     params.addParam< std::vector<Real> >("stoichiometry","Species stoichiometric coefficients: (-) sign = reactants and (+) sign for products");
     params.addParam< std::vector<Real> >("order","Order of species in reaction");
     
-    params.addRequiredCoupledVar("coupled_species","List of names of variables being coupled");
+    params.addRequiredCoupledVar("coupled_species","List of names of variables being coupled for the rate equation");
     params.addRequiredCoupledVar("main_variable","Name of the non-linear variable that this kernel acts on");
     
     return params;
@@ -95,6 +95,8 @@ _coupled_var_i(coupled("main_variable"))
     
     if (_coupled_species.size() != _stoich.size())
         Moose::out << "ERROR!!! Vectors for coupled species and species stoichiometry do not match in size!\n\n";
+    if (_coupled_species.size() != _order.size())
+        Moose::out << "ERROR!!! Vectors for coupled species and species reaction order do not match in size!\n\n";
 }
 
 Real VariableOrderReac::computeRateFunction()
@@ -153,7 +155,7 @@ Real VariableOrderReac::computeRateFunctionSpeciesOffDiagJacobi(int i)
     
     if (_stoich[i] >= 0.0)
     {
-        return -_m_stoich*_reverse*pow(_u[_qp],_m_order)*prod*_stoich[i]*pow((*_coupled_species[i])[_qp],_order[i]-1)*_phi[_j][_qp];
+        return -_m_stoich*_reverse*pow(_u[_qp],_m_order)*prod*_order[i]*pow((*_coupled_species[i])[_qp],_order[i]-1)*_phi[_j][_qp];
     }
     else
     {

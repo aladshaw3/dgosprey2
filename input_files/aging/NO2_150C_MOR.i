@@ -229,7 +229,7 @@
     [../]
  
     [./H2O_MT]
-        type = SolidMassTransfer
+        type = CoupledCoeffTimeDerivative
         variable = H_MOR
         coupled = H2O
     [../]
