@@ -81,155 +81,224 @@ registerMooseObject("dgospreyApp", VariableOrderCoupledSolid);
 template<>
 InputParameters validParams<VariableOrderCoupledSolid>()
 {
-    InputParameters params = validParams<VariableOrderCoupledCatalyst>();
+    InputParameters params = validParams<TimeDerivative>();
     
-    params.addParam< std::vector<Real> >("solids_order","Reaction order for each solid species");
-    params.addParam< std::vector<Real> >("solids_stoichiometry","Stoichiometry of each solid species");
+    params.addRequiredCoupledVar("main_variable","Name of the non-linear variable that this kernel acts on");
+    params.addParam<Real>("max_capacity",0.0,"Maximum Capacity for the Rate Function (mol/kg)");
+    params.addParam<Real>("forward_rate",0.0,"Forward reaction rate constant (per hour)");
+    params.addParam<Real>("reverse_rate",0.0,"Reverse reaction rate constant (per hour)");
+    params.addParam<Real>("site_order",0.0,"Reaction order for the adsorption site");
+    params.addParam<Real>("main_order",0.0,"Reaction order for the main variable site");
+    params.addParam<Real>("main_stoichiometry",0.0,"Stoichiometry of the main variable");
     
-    params.addRequiredCoupledVar("coupled_solids","List of names of the solid variables being coupled");
+    params.addParam< std::vector<Real> >("species_stoichiometry","Stoichiometric coefficients for the reaction species: (-) sign = reactants and (+) sign for products");
+    params.addParam< std::vector<Real> >("species_order","Reaction order for the reaction species: (-) sign = reactants and (+) sign for products");
+    params.addParam< std::vector<Real> >("catalyst_order","Reaction order for catalyst in the reaction: (-) sign = reactants and (+) sign for products");
+    params.addParam< std::vector<Real> >("adsorbed_sites","Adsorption site coefficients for the number of sites used in each reaction");
+    params.addParam< std::vector<Real> >("adsorbed_stoichiometry","Adsorption stoichiometric coefficients for the number of adsorbed species produced in each reaction");
+    params.addParam< std::vector<Real> >("adsorbed_order","Reaction order for the adsorbed species in each reaction");
+    
+    params.addRequiredCoupledVar("coupled_species","List of names of the variables being coupled");
+    params.addRequiredCoupledVar("coupled_adsorption","List of names of the adsorbed variables being coupled in this reaction");
+    params.addRequiredCoupledVar("coupled_all_adsorption","List of names of  all adsorbed variables that occupy adsorption sites");
+    params.addRequiredCoupledVar("coupled_catalysts","List of names of the catalytic variables being coupled");
     
     return params;
 }
 
 VariableOrderCoupledSolid::VariableOrderCoupledSolid(const InputParameters & parameters)
-: VariableOrderCoupledCatalyst(parameters),
-_sol_order(getParam<std::vector<Real> >("solids_order")),
-_sol_stoic(getParam<std::vector<Real> >("solids_stoichiometry"))
+: TimeDerivative(parameters),
+_maxcap(getParam<Real>("max_capacity")),
+_forward(getParam<Real>("forward_rate")),
+_reverse(getParam<Real>("reverse_rate")),
+_so(getParam<Real>("site_order")),
+_main_order(getParam<Real>("main_order")),
+_main_stoich(getParam<Real>("main_stoichiometry")),
+_spec_stoich(getParam<std::vector<Real> >("species_stoichiometry")),
+_spec_order(getParam<std::vector<Real> >("species_order")),
+_cat_order(getParam<std::vector<Real> >("catalyst_order")),
+_ads_sites(getParam<std::vector<Real> >("adsorbed_sites")),
+_ads_stoich(getParam<std::vector<Real> >("adsorbed_stoichiometry")),
+_ads_order(getParam<std::vector<Real> >("adsorbed_order")),
+_coupled_var_i(coupled("main_variable"))
 {
-    unsigned int solid_n = coupledComponents("coupled_solids");
-    _coupled_solid_vars.resize(solid_n);
-    _coupled_solid.resize(solid_n);
+    unsigned int species_n = coupledComponents("coupled_species");
+    _coupled_species_vars.resize(species_n);
+    _coupled_species.resize(species_n);
     
-    for (unsigned int i = 0; i<_coupled_solid.size(); ++i)
+    for (unsigned int i = 0; i<_coupled_species.size(); ++i)
     {
-        _coupled_solid_vars[i] = coupled("coupled_solids",i);
-        _coupled_solid[i] = &coupledValue("coupled_solids",i);
-        
+        _coupled_species_vars[i] = coupled("coupled_species",i);
+        _coupled_species[i] = &coupledValue("coupled_species",i);
     }
     
-    if (_coupled_solid.size() != _sol_stoic.size())
+    if (_coupled_species.size() != _spec_stoich.size())
         Moose::out << "ERROR!!! Vectors for coupled solids and solids stoichiometry do not match in size!\n\n";
-    if (_coupled_solid.size() != _sol_order.size())
+    if (_coupled_species.size() != _spec_order.size())
         Moose::out << "ERROR!!! Vectors for coupled solids and solids reaction order do not match in size!\n\n";
+    
+    unsigned int cat_n = coupledComponents("coupled_catalysts");
+    _coupled_cat_vars.resize(cat_n);
+    _coupled_cat.resize(cat_n);
+    
+    for (unsigned int i = 0; i<_coupled_cat.size(); ++i)
+    {
+        _coupled_cat_vars[i] = coupled("coupled_catalysts",i);
+        _coupled_cat[i] = &coupledValue("coupled_catalysts",i);
+    }
+    
+    if (_coupled_cat.size() != _cat_order.size())
+        Moose::out << "ERROR!!! Vectors for coupled catalysts and catalyst stoichiometry do not match in size!\n\n";
+    
+    unsigned int ads_n = coupledComponents("coupled_adsorption");
+    _coupled_ads_vars.resize(ads_n);
+    _coupled_ads.resize(ads_n);
+    
+    for (unsigned int i = 0; i<_coupled_ads.size(); ++i)
+    {
+        _coupled_ads_vars[i] = coupled("coupled_adsorption",i);
+        _coupled_ads[i] = &coupledValue("coupled_adsorption",i);
+    }
+    
+    if (_coupled_ads.size() != _ads_stoich.size())
+        Moose::out << "ERROR!!! Vectors for coupled adsorption and adsorption stoichiometry do not match in size!\n\n";
+    if (_coupled_ads.size() != _ads_order.size())
+        Moose::out << "ERROR!!! Vectors for coupled adsorption and adsorption reaction order do not match in size!\n\n";
+ 
+    unsigned int all_ads_n = coupledComponents("coupled_all_adsorption");
+    _coupled_all_ads_vars.resize(all_ads_n);
+    _coupled_all_ads.resize(all_ads_n);
+    
+    for (unsigned int i = 0; i<_coupled_all_ads.size(); ++i)
+    {
+        _coupled_all_ads_vars[i] = coupled("coupled_all_adsorption",i);
+        _coupled_all_ads[i] = &coupledValue("coupled_all_adsorption",i);
+        
+        if (_coupled_all_ads_vars[i] == _coupled_var_i)
+            _ads_index = i;
+    }
+    
+    if (_coupled_all_ads.size() != _ads_sites.size())
+        Moose::out << "ERROR!!! Vectors for all coupled adsorption and adsorption sites do not match in size!\n\n";
 }
 
 Real VariableOrderCoupledSolid::computeRateFunction()
 {
     
     double react = 1.0, prod = 1.0, cat = 1.0;
-    for (unsigned int i=0; i<_coupled_gas.size(); i++)
+    for (unsigned int i=0; i<_coupled_species.size(); i++)
     {
-        if (_gas_stoich[i] >= 0.0)
+        if (_spec_stoich[i] >= 0.0)
         {
-            prod = prod * pow((*_coupled_gas[i])[_qp],_g_order[i]);
+            prod = prod * pow((*_coupled_species[i])[_qp],_spec_order[i]);
         }
         else
         {
-            react = react * pow((*_coupled_gas[i])[_qp],_g_order[i]);
-        }
-    }
-    
-    for (unsigned int i=0; i<_coupled_solid.size(); i++)
-    {
-        if (_sol_stoic[i] >= 0.0)
-        {
-            prod = prod * pow((*_coupled_solid[i])[_qp],_sol_order[i]);
-        }
-        else
-        {
-            react = react * pow((*_coupled_solid[i])[_qp],_sol_order[i]);
+            react = react * pow((*_coupled_species[i])[_qp],_spec_order[i]);
         }
     }
     
     for (unsigned int j=0; j<_coupled_cat.size(); j++)
     {
-        cat = cat * pow((*_coupled_cat[j])[_qp],_c_order[j]);
+        cat = cat * pow((*_coupled_cat[j])[_qp],_cat_order[j]);
     }
     
-    return _ads_stoich[_ads_index]*cat*( (_forward*pow(CoupledConstChemisorption::computeSiteBalance(),_s_order[_ads_index])*react) - (_reverse*pow(_u[_qp],_a_order[_ads_index])*prod) );
+    for (unsigned int k=0; k<_coupled_ads.size(); k++)
+    {
+            if (_ads_stoich[k] >= 0.0)
+            {
+                prod = prod * pow((*_coupled_ads[k])[_qp],_ads_order[k]);
+            }
+            else
+            {
+                react = react * pow((*_coupled_ads[k])[_qp],_ads_order[k]);
+            }
+    }
+    
+    return _main_stoich*cat*(react*_forward*pow(computeSiteBalance(),_so) - _reverse*prod*pow(_u[_qp],_main_order));
 }
 
 Real VariableOrderCoupledSolid::computeRateFunctionJacobi()
 {
     
     double react = 1.0, prod = 1.0, cat = 1.0;
-    for (unsigned int i=0; i<_coupled_gas.size(); i++)
+    for (unsigned int i=0; i<_coupled_species.size(); i++)
     {
-        if (_gas_stoich[i] >= 0.0)
+        if (_spec_stoich[i] >= 0.0)
         {
-            prod = prod * pow((*_coupled_gas[i])[_qp],_g_order[i]);
+            prod = prod * pow((*_coupled_species[i])[_qp],_spec_order[i]);
         }
         else
         {
-            react = react * pow((*_coupled_gas[i])[_qp],_g_order[i]);
-        }
-    }
-    
-    for (unsigned int i=0; i<_coupled_solid.size(); i++)
-    {
-        if (_sol_stoic[i] >= 0.0)
-        {
-            prod = prod * pow((*_coupled_solid[i])[_qp],_sol_order[i]);
-        }
-        else
-        {
-            react = react * pow((*_coupled_solid[i])[_qp],_sol_order[i]);
+            react = react * pow((*_coupled_species[i])[_qp],_spec_order[i]);
         }
     }
     
     for (unsigned int j=0; j<_coupled_cat.size(); j++)
     {
-        cat = cat * pow((*_coupled_cat[j])[_qp],_c_order[j]);
+        cat = cat * pow((*_coupled_cat[j])[_qp],_cat_order[j]);
     }
     
-    return _ads_stoich[_ads_index]*cat*(_s_order[_ads_index]*_forward*pow(CoupledConstChemisorption::computeSiteBalance(),_s_order[_ads_index]-1)*react*CoupledConstChemisorption::computeSiteBalanceOffDiagJacobi(_ads_index) - _a_order[_ads_index]*_reverse*pow(_u[_qp],_a_order[_ads_index]-1)*prod*_phi[_j][_qp]);
-    
-}
-
-Real VariableOrderCoupledSolid::computeRateFunctionGasOffDiagJacobi(int i)
-{
-    //Is index i a reactant or product?
-    //If _gas_stoich[i] > 0, prod; else, react;
-    double react = 1.0, prod = 1.0, cat = 1.0;
-    for (unsigned int j=0; j<_coupled_gas.size(); j++)
+    for (unsigned int k=0; k<_coupled_ads.size(); k++)
     {
-        if (j != i)
-        {
-            if (_gas_stoich[j] >= 0.0)
+            if (_ads_stoich[k] >= 0.0)
             {
-                prod = prod * pow((*_coupled_gas[j])[_qp],_g_order[j]);
+                prod = prod * pow((*_coupled_ads[k])[_qp],_ads_order[k]);
             }
             else
             {
-                react = react * pow((*_coupled_gas[j])[_qp],_g_order[j]);
+                react = react * pow((*_coupled_ads[k])[_qp],_ads_order[k]);
             }
-        }
     }
     
-    for (unsigned int i=0; i<_coupled_solid.size(); i++)
+    return _main_stoich*cat*(_so*_forward*pow(computeSiteBalance(),_so-1) *react*computeSiteBalanceOffDiagJacobi(_ads_index) - _main_order*_reverse*pow(_u[_qp],_main_order-1)*prod*_phi[_j][_qp]);
+    
+}
+
+Real VariableOrderCoupledSolid::computeRateFunctionSpeciesOffDiagJacobi(int i)
+{
+    //Is index i a reactant or product?
+    //If _spec_stoich[i] > 0, prod; else, react;
+    double react = 1.0, prod = 1.0, cat = 1.0;
+    for (unsigned int j=0; j<_coupled_species.size(); j++)
     {
-        if (_sol_stoic[i] >= 0.0)
+        if (j != i)
         {
-            prod = prod * pow((*_coupled_solid[i])[_qp],_sol_order[i]);
-        }
-        else
-        {
-            react = react * pow((*_coupled_solid[i])[_qp],_sol_order[i]);
+            if (_spec_stoich[j] >= 0.0)
+            {
+                prod = prod * pow((*_coupled_species[j])[_qp],_spec_order[j]);
+            }
+            else
+            {
+                react = react * pow((*_coupled_species[j])[_qp],_spec_order[j]);
+            }
         }
     }
     
     for (unsigned int j=0; j<_coupled_cat.size(); j++)
     {
-        cat = cat * pow((*_coupled_cat[j])[_qp],_c_order[j]);
+        cat = cat * pow((*_coupled_cat[j])[_qp],_cat_order[j]);
     }
     
-    if (_gas_stoich[i] >= 0.0)
+    for (unsigned int k=0; k<_coupled_ads.size(); k++)
     {
-        return -_ads_stoich[_ads_index]*cat*_reverse*pow(_u[_qp],_a_order[_ads_index])*prod*_g_order[i]*pow((*_coupled_gas[i])[_qp],_g_order[i]-1)*_phi[_j][_qp];
+            if (_ads_stoich[k] >= 0.0)
+            {
+                prod = prod * pow((*_coupled_ads[k])[_qp],_ads_order[k]);
+            }
+            else
+            {
+                react = react * pow((*_coupled_ads[k])[_qp],_ads_order[k]);
+            }
+    }
+    
+    if (_spec_stoich[i] >= 0.0)
+    {
+        return -_main_stoich*cat*_reverse*pow(_u[_qp],_main_order)*prod*_spec_order[i]*pow((*_coupled_species[i])[_qp],_spec_order[i]-1)*_phi[_j][_qp];
     }
     else
     {
-        return _ads_stoich[_ads_index]*cat*_forward*pow(CoupledConstChemisorption::computeSiteBalance(),_s_order[_ads_index])*react*_g_order[i]*pow((*_coupled_gas[i])[_qp],_g_order[i]-1)*_phi[_j][_qp];
+        return _main_stoich*cat*_forward*pow(computeSiteBalance(),_so)*react*_spec_order[i]*pow((*_coupled_species[i])[_qp],_spec_order[i]-1)*_phi[_j][_qp];
     }
 }
 
@@ -237,27 +306,15 @@ Real VariableOrderCoupledSolid::computeRateFunctionCatalystOffDiagJacobi(int i)
 {
     
     double react = 1.0, prod = 1.0, cat = 1.0;
-    for (unsigned int j=0; j<_coupled_gas.size(); j++)
+    for (unsigned int j=0; j<_coupled_species.size(); j++)
     {
-        if (_gas_stoich[j] >= 0.0)
+        if (_spec_stoich[j] >= 0.0)
         {
-            prod = prod * pow((*_coupled_gas[j])[_qp],_g_order[j]);
+            prod = prod * pow((*_coupled_species[j])[_qp],_spec_order[j]);
         }
         else
         {
-            react = react * pow((*_coupled_gas[j])[_qp],_g_order[j]);
-        }
-    }
-    
-    for (unsigned int i=0; i<_coupled_solid.size(); i++)
-    {
-        if (_sol_stoic[i] >= 0.0)
-        {
-            prod = prod * pow((*_coupled_solid[i])[_qp],_sol_order[i]);
-        }
-        else
-        {
-            react = react * pow((*_coupled_solid[i])[_qp],_sol_order[i]);
+            react = react * pow((*_coupled_species[j])[_qp],_spec_order[j]);
         }
     }
     
@@ -265,95 +322,87 @@ Real VariableOrderCoupledSolid::computeRateFunctionCatalystOffDiagJacobi(int i)
     {
         if (j != i)
         {
-            cat = cat * pow((*_coupled_cat[j])[_qp],_c_order[j]);
+            cat = cat * pow((*_coupled_cat[j])[_qp],_cat_order[j]);
         }
     }
     
-    return _ads_stoich[_ads_index]*_c_order[i]*pow((*_coupled_cat[i])[_qp],(_c_order[i]-1))*cat*((_forward*pow(CoupledConstChemisorption::computeSiteBalance(),_s_order[_ads_index])*react) - (_reverse*pow(_u[_qp],_a_order[_ads_index])*prod));
-    
-}
-
-Real VariableOrderCoupledSolid::computeRateFunctionSolidsOffDiagJacobi(int i)
-{
-    //Is index i a reactant or product?
-    //If _sol_stoic[i] > 0, prod; else, react;
-    double react = 1.0, prod = 1.0, cat = 1.0;
-    for (unsigned int j=0; j<_coupled_solid.size(); j++)
+    for (unsigned int k=0; i<_coupled_ads.size(); k++)
     {
-        if (j != i)
-        {
-            if (_sol_stoic[i] >= 0.0)
+            if (_ads_stoich[k] >= 0.0)
             {
-                prod = prod * pow((*_coupled_solid[i])[_qp],_sol_order[i]);
+                prod = prod * pow((*_coupled_ads[k])[_qp],_ads_order[k]);
             }
             else
             {
-                react = react * pow((*_coupled_solid[i])[_qp],_sol_order[i]);
+                react = react * pow((*_coupled_ads[k])[_qp],_ads_order[k]);
             }
-        }
     }
     
-    for (unsigned int j=0; j<_coupled_gas.size(); j++)
-    {
-        if (_gas_stoich[j] >= 0.0)
-        {
-            prod = prod * pow((*_coupled_gas[j])[_qp],_g_order[j]);
-        }
-        else
-        {
-            react = react * pow((*_coupled_gas[j])[_qp],_g_order[j]);
-        }
-    }
+    return _main_stoich*_cat_order[i]*pow((*_coupled_cat[i])[_qp],(_cat_order[i]-1))*cat*((_forward*pow(computeSiteBalance(),_so)*react) - (_reverse*pow(_u[_qp],_main_order)*prod))*_phi[_j][_qp];
     
-    for (unsigned int j=0; j<_coupled_cat.size(); j++)
-    {
-        cat = cat * pow((*_coupled_cat[j])[_qp],_c_order[j]);
-    }
-    
-    if (_sol_stoic[i] >= 0.0)
-    {
-        return -_ads_stoich[_ads_index]*cat*_reverse*pow(_u[_qp],_a_order[_ads_index])*prod*_sol_order[i]*pow((*_coupled_solid[i])[_qp],_sol_order[i]-1)*_phi[_j][_qp];
-    }
-    else
-    {
-        return _ads_stoich[_ads_index]*cat*_forward*pow(CoupledConstChemisorption::computeSiteBalance(),_s_order[_ads_index])*react*_sol_order[i]*pow((*_coupled_solid[i])[_qp],_sol_order[i]-1)*_phi[_j][_qp];
-    }
 }
 
 Real VariableOrderCoupledSolid::computeRateFunctionAdsOffDiagJacobi(int i)
 {
     
     double react = 1.0, prod = 1.0, cat = 1.0;
-    for (unsigned int i=0; i<_coupled_gas.size(); i++)
+    for (unsigned int j=0; j<_coupled_species.size(); j++)
     {
-        if (_gas_stoich[i] >= 0.0)
-        {
-            prod = prod * pow((*_coupled_gas[i])[_qp],_g_order[i]);
-        }
-        else
-        {
-            react = react * pow((*_coupled_gas[i])[_qp],_g_order[i]);
-        }
-    }
-    
-    for (unsigned int i=0; i<_coupled_solid.size(); i++)
-    {
-        if (_sol_stoic[i] >= 0.0)
-        {
-            prod = prod * pow((*_coupled_solid[i])[_qp],_sol_order[i]);
-        }
-        else
-        {
-            react = react * pow((*_coupled_solid[i])[_qp],_sol_order[i]);
-        }
+            if (_spec_stoich[j] >= 0.0)
+            {
+                prod = prod * pow((*_coupled_species[j])[_qp],_spec_order[j]);
+            }
+            else
+            {
+                react = react * pow((*_coupled_species[j])[_qp],_spec_order[j]);
+            }
     }
     
     for (unsigned int j=0; j<_coupled_cat.size(); j++)
     {
-        cat = cat * pow((*_coupled_cat[j])[_qp],_c_order[j]);
+        cat = cat * pow((*_coupled_cat[j])[_qp],_cat_order[j]);
     }
     
-    return _ads_stoich[_ads_index]*cat*_s_order[_ads_index]*_forward*pow(CoupledConstChemisorption::computeSiteBalance(),_s_order[_ads_index]-1)*react*CoupledConstChemisorption::computeSiteBalanceOffDiagJacobi(i);
+    for (unsigned int k=0; i<_coupled_ads.size(); k++)
+    {
+        if (k != i)
+        {
+            if (_ads_stoich[k] >= 0.0)
+            {
+                prod = prod * pow((*_coupled_ads[k])[_qp],_ads_order[k]);
+            }
+            else
+            {
+                react = react * pow((*_coupled_ads[k])[_qp],_ads_order[k]);
+            }
+        }
+    }
+    
+    if (_ads_stoich[i] >= 0.0)
+    {
+        return  _main_stoich*cat*(react*_forward*_so*(pow(computeSiteBalance(),_so-1))*computeSiteBalanceOffDiagJacobi(i) - _reverse*prod*_ads_order[i]*pow((*_coupled_ads[i])[_qp],_ads_order[i]-1)*pow(_u[_qp],_main_order)*_phi[_j][_qp]);
+    }
+    
+    else
+    {
+        return _main_stoich*cat*react*_forward*(_so*(pow(computeSiteBalance(),_so-1))*computeSiteBalanceOffDiagJacobi(i)*pow((*_coupled_ads[i])[_qp],_ads_order[i])+_ads_order[i]*pow((*_coupled_ads[i])[_qp],_ads_order[i]-1)*computeSiteBalance()*_phi[_j][_qp]);
+    }
+
+}
+
+Real VariableOrderCoupledSolid::computeSiteBalance()
+{
+    double sum = 0.0;
+    for (unsigned int i=0; i<_coupled_all_ads.size(); i++)
+    {
+        sum += _ads_sites[i]*(*_coupled_all_ads[i])[_qp];
+    }
+    return _maxcap - sum;
+}
+
+Real VariableOrderCoupledSolid::computeSiteBalanceOffDiagJacobi(int i)
+{
+    return -_ads_sites[i]*_phi[_j][_qp];
 }
 
 Real VariableOrderCoupledSolid::computeQpResidual()
@@ -368,12 +417,12 @@ Real VariableOrderCoupledSolid::computeQpJacobian()
 
 Real VariableOrderCoupledSolid::computeQpOffDiagJacobian(unsigned int jvar)
 {
-    //Off-diagonals for gas concentrations
-    for (unsigned int i = 0; i<_coupled_gas.size(); ++i)
+    //Off-diagonals for species concentrations
+    for (unsigned int i = 0; i<_coupled_species.size(); ++i)
     {
-        if (jvar == _coupled_gas_vars[i] && jvar != _coupled_var_i)
+        if (jvar == _coupled_species_vars[i] && jvar != _coupled_var_i)
         {
-            return -_test[_i][_qp]*computeRateFunctionGasOffDiagJacobi(i);
+            return -_test[_i][_qp]*computeRateFunctionSpeciesOffDiagJacobi(i);
         }
     }
     //Off-diagonals for catalyst concentrations
@@ -382,14 +431,6 @@ Real VariableOrderCoupledSolid::computeQpOffDiagJacobian(unsigned int jvar)
         if (jvar == _coupled_cat_vars[i] && jvar != _coupled_var_i)
         {
             return -_test[_i][_qp]*computeRateFunctionCatalystOffDiagJacobi(i);
-        }
-    }
-    //Off-diagonals for solid concentrations
-    for (unsigned int i = 0; i<_coupled_solid.size(); ++i)
-    {
-        if (jvar == _coupled_solid_vars[i] && jvar != _coupled_var_i)
-        {
-            return -_test[_i][_qp]*computeRateFunctionSolidsOffDiagJacobi(i);
         }
     }
     //Off-diagonals for adsorption

@@ -77,7 +77,7 @@
 
 #pragma once
 
-#include "VariableOrderCoupledCatalyst.h"
+#include "TimeDerivative.h"
 
 /// CoupledCatalyst class object forward declarationss
 class VariableOrderCoupledSolid;
@@ -90,7 +90,7 @@ InputParameters validParams<VariableOrderCoupledSolid>();
  All public and protected members of this class are required function overrides.
  The kernel interfaces with the non-linear variables for gas concentrations and
  adsorbed concentrations. */
-class VariableOrderCoupledSolid : public VariableOrderCoupledCatalyst
+class VariableOrderCoupledSolid : public TimeDerivative
 {
 public:
     /// Required constructor for objects in MOOSE
@@ -103,17 +103,20 @@ protected:
     /// Function to compute the diagonal Jacobi for the rate function
     Real computeRateFunctionJacobi();
     
-    /// Function to compute the gas concentration off-diagonal Jacobi for the rate function
-    Real computeRateFunctionGasOffDiagJacobi(int i);
+    /// Function to compute the species concentration off-diagonal Jacobi for the rate function
+    Real computeRateFunctionSpeciesOffDiagJacobi(int i);
     
     /// Function to compute the catalyst off-diagonal Jacobi for the rate function
     Real computeRateFunctionCatalystOffDiagJacobi(int i);
     
-    /// Function to compute the solid concentration off-diagonal Jacobi for the rate function
-    Real computeRateFunctionSolidsOffDiagJacobi(int i);
-    
     /// Function to compute the adsorption concentration off-diagonal Jacobi for the rate function
     Real computeRateFunctionAdsOffDiagJacobi(int i);
+    
+    /// Site balance to determine remaining concentration of adsorption sites
+    Real computeSiteBalance();
+    
+    /// Function to compute the site balance off-diagonal Jacobi
+    Real computeSiteBalanceOffDiagJacobi(int i);
     
     /// Required residual function for standard kernels in MOOSE
     /** This function returns a residual contribution for this object.*/
@@ -131,11 +134,34 @@ protected:
      cross coupling of the variables. */
     virtual Real computeQpOffDiagJacobian(unsigned int jvar);
     
-    std::vector<Real> _sol_order;                      ///< Solid reaction order
-    std::vector<Real> _sol_stoic;                      ///< Solid stoichiometry
+    Real _maxcap;                                       ///< Maximum number of adsorption sites (mol/kg)
+    Real _forward;                                      ///< Forward rate constant for reaction
+    Real _reverse;                                      ///< Reverse rate constant for reaction
+    Real _so;                                           ///< Reaction order for adsorption sites
+    Real _main_order;                                   ///< Reaction order of the main variable
+    Real _main_stoich;                                  ///< Stoichiometry of the main variable
     
-    std::vector<const VariableValue *> _coupled_solid;    ///< Pointer list to solid concentrations (mol/kg)
-    std::vector<unsigned int> _coupled_solid_vars;        ///< Indices for the solid species in the system
+    std::vector<Real> _spec_stoich;                     ///< Vector of generic species stoichiometry: (-) = reactant, (+) = product
+    std::vector<Real> _spec_order;                      ///< Vector of generic species reaction order
+    std::vector<Real> _cat_order;                       ///< Vector of catalyst species reaction order
+    std::vector<Real> _ads_sites;                       ///< Vector of sites occupied by each adsorbed species
+    std::vector<Real> _ads_stoich;                      ///< Vector of adsorbed species stoichiometry: (-) = reactant, (+) = product
+    std::vector<Real> _ads_order;                       ///< Vector of adsorbed species reaction order
+    
+    std::vector<const VariableValue *> _coupled_species;    ///< Pointer list to generic species concentrations
+    std::vector<unsigned int> _coupled_species_vars;        ///< Indices for the generic species in the system
+    
+    std::vector<const VariableValue *> _coupled_cat;        ///< Pointer list to catalyst species concentrations
+    std::vector<unsigned int> _coupled_cat_vars;            ///< Indices for the catalyst species in the system
+    
+    std::vector<const VariableValue *> _coupled_ads;        ///< Pointer list to adsorbed species concentrations
+    std::vector<unsigned int> _coupled_ads_vars;            ///< Indices for the adsorbed species in the reaction
+    
+    std::vector<const VariableValue *> _coupled_all_ads;    ///< Pointer list to all adsorbed species concentrations
+    std::vector<unsigned int> _coupled_all_ads_vars;        ///< Indices for all adsorbed species generic species in the system
+    
+    int _ads_index;                                         ///< Index for the primary adsorption species
+    unsigned int _coupled_var_i;                            ///< Variable index for the coupled species (same species as _ads_index)
     
 private:
     
