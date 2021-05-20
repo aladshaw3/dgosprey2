@@ -4,6 +4,13 @@ Discontinuous Galerkin Off-gas SeParation and REcoverY model <Version 2.0>
 
 This version was created soley for the purpose of conforming to new MOOSE standards. No other major changes. 
 
+
+NOTE: This project is no longer actively maintained. 
+----
+User's should switch to new code base CATS (https://github.com/aladshaw3/cats). This repo has essentially all the same functionality as DG-OSPREY2.
+----
+
+
 This is a MOOSE application designed to simulate mass and energy transport of gases through a packed-bed column reactor. It uses DG kernels to ensure conservation of mass and energy for problems that are highly advectively dominant, but does not currently employ any form of slope limiters to correct the over-shoot under-shoot problems that are notorious in finite element methods. As a consequence, the solutions tend to be slightly oscillatory around the wave fronts as the various concentration profiles move through the bed. 
 
 Material and energy balances are fully coupled, along with solid phase adsorption compositions. Full coupling ensures that the mass and energy balances are not violated by the simulations. Parameters for fluid flow are determined by the molecular diffusivities of the species in the gas phase, mechanical mixing introduced by the particle sizes, fluid velocities, and bed diameter, and velocity is determined by the flow rate, bed porosity, and bed dimensions. 
